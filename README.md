@@ -1,2 +1,2 @@
-# algoritmo-exclusao-mutua
+# algoritmo-anel
 Algoritmo de exclusão mutua centralizado
