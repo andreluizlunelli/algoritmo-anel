@@ -9,6 +9,7 @@ public class Processo implements Serializable {
 	private Integer pidId;
 	private Processo proximo;
 	private Processo anterior;
+        private Thread t;
 
 	public Processo() {
 		super();
@@ -110,5 +111,13 @@ public class Processo implements Serializable {
 	@Override
 	public String toString() {
 		return "Processo [pidId=" + pidId + "]";
+	}
+
+	public Thread getT() {
+		return t;
+	}
+
+	public void setT(Thread t) {
+		this.t = t;
 	}
 }

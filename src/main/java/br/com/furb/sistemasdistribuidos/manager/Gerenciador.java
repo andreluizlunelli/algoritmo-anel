@@ -1,11 +1,13 @@
 package br.com.furb.sistemasdistribuidos.manager;
 
+import br.com.furb.sistemasdistribuidos.model.Consumidor;
 import java.io.Serializable;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import br.com.furb.sistemasdistribuidos.model.ListaProcessos;
 import br.com.furb.sistemasdistribuidos.model.Processo;
+import br.com.furb.sistemasdistribuidos.model.Produtor;
 import br.com.furb.sistemasdistribuidos.uteis.Randomize;
 
 public class Gerenciador implements Serializable {
@@ -20,6 +22,7 @@ public class Gerenciador implements Serializable {
 	private Timer timerConsultarCoordenador;
 	private Timer timerConsultarNovoProcesso;
 	private Timer timerDesativarCoordenador;
+        private Buffer bufferCompartilhado;
 
 	public Gerenciador() {
 		super();
@@ -29,6 +32,7 @@ public class Gerenciador implements Serializable {
 		timerConsultarNovoProcesso = new Timer();
 		timerEliminarProcesso = new Timer();
 		timerDesativarCoordenador = new Timer();
+		bufferCompartilhado = new Buffer();
 	}
 
 	public void criar() {
@@ -38,7 +42,7 @@ public class Gerenciador implements Serializable {
 		listaProcessos.add(coordenador);
 	}
 
-	public void inicializar() {
+	public void inicializar() {                
 		TimerTask timerTaskConsultarCoordenador = new ConsultarCoordenador();
 		timerConsultarCoordenador.scheduleAtFixedRate(
 				timerTaskConsultarCoordenador, 0, 2000);
@@ -55,11 +59,16 @@ public class Gerenciador implements Serializable {
 
 	public void encerrar() {
 		try {
-			Thread.sleep(60000);
+			Thread.sleep(20000);
 			timerDesativarCoordenador.cancel();
 			timerConsultarCoordenador.cancel();
 			timerConsultarNovoProcesso.cancel();
 			timerEliminarProcesso.cancel();
+                        
+                        for (int i = 0; i < listaProcessos.size(); i++)
+                        {
+                            listaProcessos.get(i).getT().stop();
+                        }
 		} catch (Exception exception) {
 			exception.printStackTrace();
 		}
@@ -87,7 +96,25 @@ public class Gerenciador implements Serializable {
 		public void run() {
 			Processo processo = new Processo();
 			processo.setPidId(Processo.getIID());
-			listaProcessos.add(processo);
+                        
+                        /**
+                         * Start Produto / Consumidor
+                         */
+                        Thread t;
+                        if ((processo.getIID() % 2) == 0)
+                        {
+                            t = new Produtor(processo.getIID(), bufferCompartilhado, 2);
+                        }
+                        else
+                        {
+                            t = new Consumidor(processo.getIID(), bufferCompartilhado, 2);
+                        }
+                        
+                        processo.setT(t);
+                        listaProcessos.add(processo);
+                        
+                        processo.getT().start();
+                        
 			System.out.println("Criando Novo Processo:"+processo);
 		}
 	}
